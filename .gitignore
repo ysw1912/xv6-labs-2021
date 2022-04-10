@@ -1,0 +1,10 @@
+*.[oadS]
+*.asm
+*.sym
+
+.idea/
+cmake-build-debug/
+
+__pycache__
+
+CMakeLists.txt
