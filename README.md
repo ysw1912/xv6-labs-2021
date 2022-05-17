@@ -12,5 +12,5 @@ Reference: https://pdos.csail.mit.edu/6.S081/2021/schedule.html
 
 ### Lab: system calls
 
-- System call tracing: [user/trace.c](./user/trace.c)
-- Sysinfo
+- System call tracing: [kernel/sysproc.c](./kernel/sysproc.c)
+- Sysinfo: [kernel/sysproc.c](./kernel/sysproc.c)
