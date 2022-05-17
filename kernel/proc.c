@@ -8,7 +8,7 @@
 
 struct cpu cpus[NCPU];
 
-struct proc proc[NPROC];
+struct proc processes[NPROC];
 
 struct proc *initproc;
 
@@ -33,11 +33,11 @@ void
 proc_mapstacks(pagetable_t kpgtbl) {
   struct proc *p;
   
-  for(p = proc; p < &proc[NPROC]; p++) {
+  for(p = processes; p < &processes[NPROC]; p++) {
     char *pa = kalloc();
     if(pa == 0)
       panic("kalloc");
-    uint64 va = KSTACK((int) (p - proc));
+    uint64 va = KSTACK((int) (p - processes));
     kvmmap(kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
   }
 }
@@ -50,9 +50,9 @@ procinit(void)
   
   initlock(&pid_lock, "nextpid");
   initlock(&wait_lock, "wait_lock");
-  for(p = proc; p < &proc[NPROC]; p++) {
+  for(p = processes; p < &processes[NPROC]; p++) {
       initlock(&p->lock, "proc");
-      p->kstack = KSTACK((int) (p - proc));
+      p->kstack = KSTACK((int) (p - processes));
   }
 }
 
@@ -106,7 +106,7 @@ allocproc(void)
 {
   struct proc *p;
 
-  for(p = proc; p < &proc[NPROC]; p++) {
+  for(p = processes; p < &processes[NPROC]; p++) {
     acquire(&p->lock);
     if(p->state == UNUSED) {
       goto found;
@@ -328,7 +328,7 @@ reparent(struct proc *p)
 {
   struct proc *pp;
 
-  for(pp = proc; pp < &proc[NPROC]; pp++){
+  for(pp = processes; pp < &processes[NPROC]; pp++){
     if(pp->parent == p){
       pp->parent = initproc;
       wakeup(initproc);
@@ -395,7 +395,7 @@ wait(uint64 addr)
   for(;;){
     // Scan through table looking for exited children.
     havekids = 0;
-    for(np = proc; np < &proc[NPROC]; np++){
+    for(np = processes; np < &processes[NPROC]; np++){
       if(np->parent == p){
         // make sure the child isn't still in exit() or swtch().
         acquire(&np->lock);
@@ -448,7 +448,7 @@ scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for(p = proc; p < &proc[NPROC]; p++) {
+    for(p = processes; p < &processes[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
         // Switch to chosen process.  It is the process's job
@@ -564,7 +564,7 @@ wakeup(void *chan)
 {
   struct proc *p;
 
-  for(p = proc; p < &proc[NPROC]; p++) {
+  for(p = processes; p < &processes[NPROC]; p++) {
     if(p != myproc()){
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
@@ -583,7 +583,7 @@ kill(int pid)
 {
   struct proc *p;
 
-  for(p = proc; p < &proc[NPROC]; p++){
+  for(p = processes; p < &processes[NPROC]; p++){
     acquire(&p->lock);
     if(p->pid == pid){
       p->killed = 1;
@@ -646,7 +646,7 @@ procdump(void)
   char *state;
 
   printf("\n");
-  for(p = proc; p < &proc[NPROC]; p++){
+  for(p = processes; p < &processes[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
     if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
@@ -656,4 +656,15 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+uint64 get_nproc(void) {
+  uint64 nproc = 0;
+  struct proc* p;
+  for (p = processes; p < &processes[NPROC]; p++) {
+    if (p->state != UNUSED) {
+      nproc++;
+    }
+  }
+  return nproc;
 }

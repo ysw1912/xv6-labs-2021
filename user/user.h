@@ -1,5 +1,6 @@
 struct stat;
 struct rtcdate;
+struct sysinfo;
 
 // system calls
 int fork(void);
@@ -43,3 +44,4 @@ void *memcpy(void *, const void *, uint);
 
 // lab
 int trace(int);
+int sysinfo(struct sysinfo*);
